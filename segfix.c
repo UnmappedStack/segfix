@@ -170,11 +170,11 @@ void segfault_handler(int sig, siginfo_t *si, void *context) {
 }
 
 /* sets the new segfault signal handler and other initiation,
- * called by SAFEC_INIT macro which should be called at start of the program. */
+ * called by SEGFIX_INIT macro which should be called at start of the program. */
 int segfix_init(char *cmd) {
     // make sure that segfix hasn't already been initiated
     if (global_info.is_initiated) {
-        printf("segfix has already been initiated, cannot initiate twice. Only call SAFEC_INIT() macro at the start of your main() function.\n");
+        printf("segfix has already been initiated, cannot initiate twice. Only call SEGFIX_INIT() macro at the start of your main() function.\n");
         return 1;
     }
     global_info.is_initiated = 1;

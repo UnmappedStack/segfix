@@ -6,10 +6,10 @@
 #define RESET "\x1B[0m"
 
 /* Library forward definitions */
-int segfix_init(char *cmd); // don't call this, use SAFEC_INIT()
+int segfix_init(char *cmd); // don't call this, use SEGFIX_INIT()
 
 // This is the actual macro that should be called at the beginning of main().
-#define SAFEC_INIT(argc, argv) \
+#define SEGFIX_INIT(argc, argv) \
     do { \
         if (!argc) {\
             printf("Failed to initiate segfix, argument 0 as executable location required.\n"); \

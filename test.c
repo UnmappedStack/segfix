@@ -19,7 +19,7 @@ void cause_stackoverflow() {
 }
 
 int main(int argc, char **argv) {
-    SAFEC_INIT(argc, argv);
+    SEGFIX_INIT(argc, argv);
     if (argc != 2) {
         printf("Too many or not enough arguments supplied to test program, expected one. "
                "(second argument can either be \"nullpointer\", \"write_rodata\", or \"stackoverflow\")\n");

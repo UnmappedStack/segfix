@@ -20,12 +20,12 @@ This will build an object file, `segfix.o`. You can now link your program with t
 
 To use `segfix`, you'll need to have PIE off and have debug symbols on, using the flags `-no-pie -fno-pie -g`.
 
-Next, you need to simply include `segfix.h` in your main entry file of your project and call the `SAFEC_INIT()` macro immediately:
+Next, you need to simply include `segfix.h` in your main entry file of your project and call the `SEGFIX_INIT()` macro immediately:
 ```C
 #include "segfix.h"
 
 int main(int argc, char **argv) {
-    SAFEC_INIT(argc, argv);
+    SEGFIX_INIT(argc, argv);
     // do everything else
 }
 ```
