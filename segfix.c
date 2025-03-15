@@ -40,7 +40,7 @@ segfixInfo global_info = {0};
 /* simple error handler which takes an error message, prints it, and exits */
 __attribute__((noreturn))
 void err(char *msg) {
-    printf(msg);
+    fprintf(stderr, msg);
     exit(1);
 }
 
@@ -94,7 +94,7 @@ void check_readonly_memory_issue(siginfo_t *si, ucontext_t *ucontext) {
 
 void check_nullpointer_issue(siginfo_t *si, ucontext_t *ucontext) {
     if (si->si_addr < (void*) 10) {
-        printf(MAG "\nIssue found, usage of very small or null pointer.\n\n" RESET
+        fprintf(stderr, MAG "\nIssue found, usage of very small or null pointer.\n\n" RESET
                "You seem to have defined a pointer with a value of %p which is either a null pointer or very small, and thus is not a valid memory address.\n",
                si->si_addr);
         err("");
@@ -142,7 +142,7 @@ segfault_issue_check checks[] = {
 typedef struct StackFrame StackFrame;
 
 void display_fault_addr(void *addr) {
-    printf("Faulting address: %p -> ", addr);
+    fprintf(stderr, "Faulting address: %p -> ", addr);
     fflush(stdout);
     // Call addr2line to get the faulting line
     pid_t pid = fork();
@@ -160,7 +160,7 @@ void display_fault_addr(void *addr) {
 
 /* general segfault signal handler, tries to check the source of the error for clean error reporting. */ 
 void segfault_handler(int sig, siginfo_t *si, void *context) {
-    printf(RED "Segmentation fault occured.\n" RESET);
+    fprintf(stderr, RED "Segmentation fault occured.\n" RESET);
     ucontext_t *ucontext = (ucontext_t *)context;
     display_fault_addr((void*) ucontext->uc_mcontext.gregs[REG_RIP]);
     // Find the issue source
@@ -174,14 +174,14 @@ void segfault_handler(int sig, siginfo_t *si, void *context) {
 int segfix_init(char *cmd) {
     // make sure that segfix hasn't already been initiated
     if (global_info.is_initiated) {
-        printf("segfix has already been initiated, cannot initiate twice. Only call SEGFIX_INIT() macro at the start of your main() function.\n");
+        fprintf(stderr, "segfix has already been initiated, cannot initiate twice. Only call SEGFIX_INIT() macro at the start of your main() function.\n");
         return 1;
     }
     global_info.is_initiated = 1;
     /* make sure that the program isn't position independent (this will make debug symbols not be able to find the
      * line number) */
     if (!getauxval(AT_BASE)) {
-        printf("Position independent executables cannot be used in debug programs with segfix. Please use the -no-pie compilation option.\n");
+        fprintf(stderr, "Position independent executables cannot be used in debug programs with segfix. Please use the -no-pie compilation option.\n");
         return 1;
     }
     // save some information about the program
@@ -191,23 +191,23 @@ int segfix_init(char *cmd) {
     stack_t ss;
     ss.ss_sp = (void*) ((size_t) malloc(ALT_STACK_SIZE) + ALT_STACK_SIZE);
     if (!ss.ss_sp) {
-        printf("Allocating alternate stack failed (segfix_init() in segfix).\n");
+        fprintf(stderr, "Allocating alternate stack failed (segfix_init() in segfix).\n");
         return 1;
     }
     ss.ss_size = ALT_STACK_SIZE;
     ss.ss_flags = 0;
     if (sigaltstack(&ss, NULL) < 0) {
-        printf("Failed to set alternate stack for segmentation faults (segfix_init() in segfix).\n");
+        fprintf(stderr, "Failed to set alternate stack for segmentation faults (segfix_init() in segfix).\n");
         return 1;
     }
     sa.sa_flags = SA_SIGINFO | SA_ONSTACK;
     sa.sa_sigaction = segfault_handler;
     if (sigemptyset(&sa.sa_mask) < 0) {
-        printf("Failed sigemptyset() in segfix_init() in segfix.\n");
+        fprintf(stderr, "Failed sigemptyset() in segfix_init() in segfix.\n");
         return 1;
     }
     if (sigaction(SIGSEGV, &sa, NULL) < 0) {
-        printf("Failed to set segfault action to segfix handler (segfix_init() in segfix).\n");
+        fprintf(stderr, "Failed to set segfault action to segfix handler (segfix_init() in segfix).\n");
         return 1;
     }
     // initiate a list of read only memory sections
