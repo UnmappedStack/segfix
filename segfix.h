@@ -1,4 +1,5 @@
 #pragma once
+#include <stdio.h>
 
 /* ANSI colour codes */
 #define RED   "\x1B[31m"
@@ -12,11 +13,11 @@ int segfix_init(char *cmd); // don't call this, use SEGFIX_INIT()
 #define SEGFIX_INIT(argc, argv) \
     do { \
         if (!argc) {\
-            printf("Failed to initiate segfix, argument 0 as executable location required.\n"); \
+            fprintf(stderr, "Failed to initiate segfix, argument 0 as executable location required.\n"); \
             return 1; \
         } \
         if (segfix_init(argv[0])) {\
-            printf("segfix initiation failed.\n"); \
+            fprintf(stderr, "segfix initiation failed.\n"); \
             return 1; \
         } \
     } while (0)
