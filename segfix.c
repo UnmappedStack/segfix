@@ -182,7 +182,7 @@ void stack_trace(uint64_t rbp, uint64_t rip) {
 
 /* general segfault signal handler, tries to check the source of the error for clean error reporting. */ 
 void segfault_handler(int sig, siginfo_t *si, void *context) {
-    fprintf(stderr, RED "Segmentation fault occured.\n" RESET);
+    fprintf(stderr, RED "Segmentation fault occurred.\n" RESET);
     ucontext_t *ucontext = (ucontext_t *)context;
     stack_trace((uint64_t) ucontext->uc_mcontext.gregs[REG_RBP], (uint64_t) ucontext->uc_mcontext.gregs[REG_RIP]);
     // Find the issue source
