@@ -4,6 +4,9 @@ A custom segfault handler library for C, written in C.
 
 segfix can detect the source of the error for some common cases such as null pointers, stack overflow/underflow, and writes to read-only data sections, and then explain the issue to you. It can also get the line number and file that the fault occured in.
 
+> [!NOTE]  
+> Unfortunately, segfix currently only supports x86_64 Linux. Please feel free to open an issue if there's a specific platform you want me to support next (or open a PR with a new platform)
+
 ## Usage
 To use segfix in your project, you'll need to first clone the repository and build the library.
 ```
