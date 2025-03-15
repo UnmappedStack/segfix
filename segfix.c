@@ -28,6 +28,13 @@ typedef struct {
     void *end;
 } ReadOnlySection;
 
+// A single stack frame for stack unwinding
+typedef struct StackFrame StackFrame;
+struct StackFrame {
+    StackFrame* rbp;
+    uint64_t rip;
+};
+
 // All global information that segfix uses
 typedef struct {
     int is_initiated;
@@ -140,6 +147,7 @@ segfault_issue_check checks[] = {
     check_invalid_rip_issue,
 };
 
+/* calls addr2line to display the line number + file in a source codebase from an address */
 void addr2line(void *addr) {
     pid_t pid = fork();
     if (pid) {
@@ -154,13 +162,8 @@ void addr2line(void *addr) {
     }
 }
 
-typedef struct StackFrame StackFrame;
-
-struct StackFrame {
-    StackFrame* rbp;
-    uint64_t rip;
-};
-
+/* unwinds the stack and displays the addresses of each call, as well as the source location of it
+ * using addr2line internally */
 void stack_trace(uint64_t rbp, uint64_t rip) {
     fprintf(stderr, "\nStack Trace (Most recent call first): \n");
     fprintf(stderr, " %p -> ", (void*) rip);
