@@ -33,6 +33,7 @@ typedef struct {
     int is_initiated;
     ReadOnlySection rosections;
     char *cmd;
+    void *entry_rbp;
 } segfixInfo;
 
 segfixInfo global_info = {0};
@@ -139,12 +140,7 @@ segfault_issue_check checks[] = {
     check_invalid_rip_issue,
 };
 
-typedef struct StackFrame StackFrame;
-
-void display_fault_addr(void *addr) {
-    fprintf(stderr, "Faulting address: %p -> ", addr);
-    fflush(stdout);
-    // Call addr2line to get the faulting line
+void addr2line(void *addr) {
     pid_t pid = fork();
     if (pid) {
         // parent
@@ -158,11 +154,37 @@ void display_fault_addr(void *addr) {
     }
 }
 
+typedef struct StackFrame StackFrame;
+
+struct StackFrame {
+    StackFrame* rbp;
+    uint64_t rip;
+};
+
+void stack_trace(uint64_t rbp, uint64_t rip) {
+    fprintf(stderr, "\nStack Trace (Most recent call first): \n");
+    fprintf(stderr, " %p -> ", (void*) rip);
+    fflush(stderr);
+    addr2line((void*) rip);
+    StackFrame *stack = (StackFrame*) rbp;
+    while (stack) {
+        fprintf(stderr, " %p -> ", (void*) stack->rip);
+        fflush(stderr);
+        addr2line((void*) stack->rip);
+        if (stack->rbp->rip == stack->rip) {
+            fprintf(stderr, "Omitted some entries due to repeats likely due to recursion.\n");
+            break;
+        }
+        if ((void*) stack->rbp > global_info.entry_rbp) break;
+        stack = stack->rbp;
+    }
+}
+
 /* general segfault signal handler, tries to check the source of the error for clean error reporting. */ 
 void segfault_handler(int sig, siginfo_t *si, void *context) {
     fprintf(stderr, RED "Segmentation fault occured.\n" RESET);
     ucontext_t *ucontext = (ucontext_t *)context;
-    display_fault_addr((void*) ucontext->uc_mcontext.gregs[REG_RIP]);
+    stack_trace((uint64_t) ucontext->uc_mcontext.gregs[REG_RBP], (uint64_t) ucontext->uc_mcontext.gregs[REG_RIP]);
     // Find the issue source
     for (size_t i = 0; i < sizeof(checks) / sizeof(checks[0]); i++) checks[i](si, ucontext);
     // Checked all known sources of issues, return a last-resort error
@@ -186,6 +208,9 @@ int segfix_init(char *cmd) {
     }
     // save some information about the program
     global_info.cmd = cmd;
+    ucontext_t ctx;
+    getcontext(&ctx);
+    global_info.entry_rbp = (void*) ctx.uc_mcontext.gregs[REG_RBP];
     // set the segfault handler with it's own stack
     struct sigaction sa;
     stack_t ss;
